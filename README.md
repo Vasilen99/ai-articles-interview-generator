@@ -19,14 +19,14 @@ cp .env.example .env
 npm run start:dev
 ```
 
-Backend runs on `http://localhost:5000`
+Backend runs on `http://localhost:3001`
 
 ### 2. Frontend Setup
 
 ```bash
 cd frontend
 npm install
-# Create .env.local with NEXT_PUBLIC_API_URL=http://localhost:5000
+# Create .env.local with NEXT_PUBLIC_API_URL=http://localhost:3001
 npm run dev
 ```
 
@@ -64,11 +64,11 @@ Frontend runs on `http://localhost:3000`
 **Backend (`.env`):**
 ```
 OPENAI_API_KEY=your_key_here
-PORT=5000
+PORT=3001
 FRONTEND_URL=http://localhost:3000
 ```
 
 **Frontend (`.env.local`):**
 ```
-NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
