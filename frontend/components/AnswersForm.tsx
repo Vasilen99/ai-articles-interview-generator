@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { InterviewQuestion } from '@/types/questions';
-import { Answer } from '@/types/answers';
-import QuestionAnswerInput from './QuestionAnswerInput';
+import { useState } from "react";
+import { InterviewQuestion } from "@/types/questions";
+import { Answer } from "@/types/answers";
+import QuestionAnswerInput from "./QuestionAnswerInput";
 
 interface AnswersFormProps {
   topic: string;
@@ -20,33 +20,37 @@ export default function AnswersForm({
   onBack,
   isSubmitting = false,
 }: AnswersFormProps) {
-  const [answers, setAnswers] = useState<Map<string, { answer: string; method: 'text' | 'voice' }>>(
-    new Map()
-  );
+  const [answers, setAnswers] = useState<
+    Map<number, { answer: string; method: "text" | "voice" }>
+  >(new Map());
 
-  const handleAnswerChange = (questionId: string, answer: string, method: 'text' | 'voice') => {
+  const handleAnswerChange = (
+    questionId: number,
+    answer: string,
+    method: "text" | "voice"
+  ) => {
     setAnswers(new Map(answers.set(questionId, { answer, method })));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const answersArray: Answer[] = questions.map(q => ({
+
+    const answersArray: Answer[] = questions.map((q) => ({
       questionId: q.id,
-      answer: answers.get(q.id)?.answer || '',
-      inputMethod: answers.get(q.id)?.method || 'text',
+      answer: answers.get(q.id)?.answer || "",
+      inputMethod: answers.get(q.id)?.method || "text",
     }));
 
     onSubmit(answersArray);
   };
 
-  const allQuestionsAnswered = questions.every(q => {
-    const answer = answers.get(q.id)?.answer || '';
+  const allQuestionsAnswered = questions.every((q) => {
+    const answer = answers.get(q.id)?.answer || "";
     return answer.trim().length > 0;
   });
 
   const answeredCount = Array.from(answers.values()).filter(
-    a => a.answer.trim().length > 0
+    (a) => a.answer.trim().length > 0
   ).length;
 
   return (
@@ -54,15 +58,15 @@ export default function AnswersForm({
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Answer Questions</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Answer Questions
+            </h2>
             <p className="text-sm text-gray-600 mt-1">
               Topic: <span className="font-medium text-gray-900">{topic}</span>
             </p>
           </div>
           <div className="text-right">
-            <div className="text-sm font-medium text-gray-600">
-              Progress
-            </div>
+            <div className="text-sm font-medium text-gray-600">Progress</div>
             <div className="text-2xl font-bold text-blue-600">
               {answeredCount}/{questions.length}
             </div>
@@ -81,11 +85,12 @@ export default function AnswersForm({
         {questions.map((question, index) => (
           <QuestionAnswerInput
             key={question.id}
-            questionId={question.id}
             question={question.question}
             questionNumber={index + 1}
-            value={answers.get(question.id)?.answer || ''}
-            onChange={(answer, method) => handleAnswerChange(question.id, answer, method)}
+            value={answers.get(question.id)?.answer || ""}
+            onChange={(answer, method) =>
+              handleAnswerChange(question.id, answer, method)
+            }
           />
         ))}
 
@@ -105,9 +110,25 @@ export default function AnswersForm({
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Submitting Answers...
               </span>

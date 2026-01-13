@@ -1,5 +1,5 @@
 export interface Answer {
-  questionId: string;
+  questionId: number;
   answer: string;
   inputMethod: 'text' | 'voice';
 }

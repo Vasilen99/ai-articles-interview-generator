@@ -1,38 +1,29 @@
-import { Injectable } from '@nestjs/common';
-import { OpenAI } from 'openai';
+import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { OpenAIService } from '../shared/openai.service';
 import type { GenerateArticleDto, GenerateArticleResponse } from './dto/generate-article.dto';
 
 @Injectable()
 export class ArticlesService {
-  private openai: OpenAI;
-
-  constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-  }
+  constructor(private readonly openaiService: OpenAIService) {}
 
   async generateArticle(dto: GenerateArticleDto): Promise<GenerateArticleResponse> {
     const { topic, answers } = dto;
 
     if (!topic || typeof topic !== 'string') {
-      throw new Error('Topic is required');
+      throw new BadRequestException('Topic is required');
     }
 
     if (!answers || !Array.isArray(answers) || answers.length === 0) {
-      throw new Error('Answers must be a non-empty array');
+      throw new BadRequestException('Answers must be a non-empty array');
     }
 
     // Create a structured prompt for article generation
-    let interviewContext = `Topic: ${topic}\n\nInterview Q&A:\n`;
-    for (const answer of answers) {
-      const question = answer.question || '';
-      const answerText = answer.answer || '';
-      interviewContext += `\nQ: ${question}\nA: ${answerText}\n`;
-    }
+    const interviewContext = this.formatInterviewContext(topic, answers);
 
     try {
-      const response = await this.openai.chat.completions.create({
+      const openai = this.openaiService.getClient();
+      
+      const response = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
@@ -51,7 +42,7 @@ export class ArticlesService {
       });
 
       const article = response.choices[0].message.content?.trim() || '';
-      const wordCount = article.split(/\s+/).length;
+      const wordCount = article.split(/\s+/).filter(word => word.length > 0).length;
 
       return {
         article,
@@ -59,7 +50,19 @@ export class ArticlesService {
       };
     } catch (error) {
       console.error('Error generating article:', error);
-      throw new Error('Failed to generate article');
+      throw new InternalServerErrorException('Failed to generate article');
     }
+  }
+
+  private formatInterviewContext(topic: string, answers: any[]): string {
+    let context = `Topic: ${topic}\n\nInterview Q&A:\n`;
+    
+    for (const answer of answers) {
+      const question = answer.question || '';
+      const answerText = answer.answer || '';
+      context += `\nQ: ${question}\nA: ${answerText}\n`;
+    }
+    
+    return context;
   }
 }
