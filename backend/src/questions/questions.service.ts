@@ -1,26 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { OpenAI } from 'openai';
+import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { OpenAIService } from '../shared/openai.service';
 import type { GenerateQuestionsDto, GenerateQuestionsResponse, InterviewQuestion } from './dto/generate-questions.dto';
 
 @Injectable()
 export class QuestionsService {
-  private openai: OpenAI;
-
-  constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-  }
+  constructor(private readonly openaiService: OpenAIService) {}
 
   async generateQuestions(dto: GenerateQuestionsDto): Promise<GenerateQuestionsResponse> {
     const { topic } = dto;
 
     if (!topic || typeof topic !== 'string' || !topic.trim()) {
-      throw new Error('Topic must be a non-empty string');
+      throw new BadRequestException('Topic must be a non-empty string');
     }
 
     try {
-      const response = await this.openai.chat.completions.create({
+      const openai = this.openaiService.getClient();
+      
+      const response = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
@@ -42,28 +38,20 @@ export class QuestionsService {
 
       const content = response.choices[0].message.content?.trim();
       if (!content) {
-        throw new Error('No content received from OpenAI');
+        throw new InternalServerErrorException('No content received from OpenAI');
       }
 
       const questionsData = JSON.parse(content);
       const questions = questionsData.questions || [];
 
       // Format questions
-      const formattedQuestions: InterviewQuestion[] = [];
-      for (let i = 0; i < Math.min(questions.length, 5); i++) {
-        const q = questions[i];
-        if (typeof q === 'object' && q.question) {
-          formattedQuestions.push({
-            id: i + 1,
-            question: q.question,
-          });
-        } else if (typeof q === 'string') {
-          formattedQuestions.push({
-            id: i + 1,
-            question: q,
-          });
-        }
-      }
+      const formattedQuestions: InterviewQuestion[] = questions
+        .slice(0, 5)
+        .map((q: any, i: number) => ({
+          id: i + 1,
+          question: typeof q === 'object' ? q.question : q,
+        }))
+        .filter((q: InterviewQuestion) => q.question);
 
       return {
         topic,
@@ -71,7 +59,7 @@ export class QuestionsService {
       };
     } catch (error) {
       console.error('Error generating questions:', error);
-      throw new Error('Failed to generate questions');
+      throw new InternalServerErrorException('Failed to generate questions');
     }
   }
 }
